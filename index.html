@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f5e4d"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
+<title>حسابداری من</title>
+<style>
+:root{--bg:#f6f5f1;--s:#fff;--t:#1c2321;--m:#66706c;--b:#dcdad2;--p:#0f5e4d;--pl:#e0efe9;--r:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#141a18;--s:#1d2523;--t:#eceee9;--m:#9aa5a0;--b:#2e3a37;--p:#4fb99f;--pl:#1f3a33;--r:#f2877f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.6 Vazirmatn,Tahoma,system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header{position:sticky;top:0;background:var(--p);color:#fff;display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;z-index:5}
+header button{background:none;border:0;color:#fff;font-size:24px;padding:0}header h1{font-size:17px;margin:0;font-weight:500}
+#ov{position:fixed;inset:0;background:#0006;display:none;z-index:8}#dr{position:fixed;top:0;bottom:0;right:0;width:76%;max-width:300px;background:var(--s);transform:translateX(100%);transition:transform .2s;z-index:9;overflow:auto;padding-top:env(safe-area-inset-top)}
+body.o #ov{display:block}body.o #dr{transform:none}
+#dr h2{margin:0;padding:18px 16px;font-size:16px;font-weight:500;border-bottom:1px solid var(--b)}
+#dr a{display:block;padding:12px 16px;color:var(--t)}#dr a.on{background:var(--pl);color:var(--p)}
+main{padding:14px}.c{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:12px;margin-bottom:10px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}.k{font-size:12px;color:var(--m)}.v{font-size:19px;font-weight:500}
+input,select{width:100%;padding:9px;margin:4px 0 10px;border:1px solid var(--b);border-radius:8px;background:var(--s);color:var(--t);font:inherit}
+button.b{background:var(--p);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit}button.s{background:var(--pl);color:var(--p)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--b)}.row:first-child{border:0}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 4px;border-bottom:1px solid var(--b);text-align:right}.n{color:var(--p)}.d{color:var(--r)}
+h3{font-size:15px;margin:14px 0 8px;font-weight:500}
+</style></head><body>
+<header><button onclick="document.body.classList.add('o')" aria-label="منو">☰</button><h1 id="ti">خانه</h1></header>
+<div id="ov" onclick="document.body.classList.remove('o')"></div><nav id="dr"></nav><main id="m"></main>
+<script>
+const K='hesab_db',$=s=>document.querySelector(s);
+const AC=[[101,'صندوق','دارایی'],[102,'بانک','دارایی'],[103,'حساب‌های دریافتنی','دارایی'],[104,'موجودی کالا','دارایی'],[201,'حساب‌های پرداختنی','بدهی'],[301,'سرمایه','سرمایه'],[401,'فروش','درآمد'],[501,'بهای تمام‌شده کالا','هزینه']];
+let db;try{db=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!db){db={n:100,accounts:AC.map((a,i)=>({id:i+1,code:a[0],name:a[1],type:a[2]})),persons:[],products:[],docs:[]}}
+db.chq=db.chq||[];[[105,'اسناد دریافتنی (چک)','دارایی'],[202,'اسناد پرداختنی (چک)','بدهی']].forEach(a=>{if(!db.accounts.some(x=>x.code==a[0]))db.accounts.push({id:++db.n,code:a[0],name:a[1],type:a[2]})});
+const save=()=>localStorage.setItem(K,JSON.stringify(db)),nid=()=>++db.n,fa=n=>Math.round(+n||0).toLocaleString('fa-IR');
+const ac=c=>db.accounts.find(a=>a.code==c).id,nm=(l,i)=>(l.find(x=>x.id==i)||{}).name||'-';
+const today=()=>new Date().toISOString().slice(0,10),fd=d=>new Date(d).toLocaleDateString('fa-IR-u-ca-persian');
+const lines=()=>db.docs.flatMap(d=>d.lines);
+const sum=f=>lines().filter(f).reduce((s,l)=>s+l.d-l.c,0);
+const pbal=id=>sum(l=>l.p==id);
+const opt=(a,f)=>a.map(x=>`<option value="${x.id}">${f(x)}</option>`).join('');
+const V=[['home','خانه'],['persons','اشخاص'],['products','کالا و انبار'],['sale','فاکتور فروش'],['buy','فاکتور خرید'],['rec','دریافت و پرداخت'],['chq','چک‌ها'],['journal','اسناد حسابداری'],['accounts','حساب‌ها'],['report','گزارش‌ها'],['backup','پشتیبان‌گیری']];
+let S={v:'home',L:[]};
+function go(v){S.v=v;S.L=[];document.body.classList.remove('o');render()}
+function render(){
+ $('#dr').innerHTML='<h2>حسابداری من</h2>'+V.map(x=>`<a href="#" class="${x[0]==S.v?'on':''}" onclick="go('${x[0]}');return false">${x[1]}</a>`).join('');
+ $('#ti').textContent=(V.find(x=>x[0]==S.v)||['','گردش حساب'])[1];$('#m').innerHTML=R[S.v]();if($('#k'))fill();scrollTo(0,0)}
+const card=(k,v,c='')=>`<div class="c"><div class="k">${k}</div><div class="v ${c}">${fa(v)}</div></div>`;
+const R={
+home:()=>`<div class="g">${card('صندوق',sum(l=>l.a==ac(101)))}${card('بانک',sum(l=>l.a==ac(102)))}${card('طلب از مشتریان',db.persons.reduce((s,p)=>s+Math.max(pbal(p.id),0),0),'n')}${card('بدهی به تأمین‌کنندگان',db.persons.reduce((s,p)=>s-Math.min(pbal(p.id),0),0),'d')}${card('کل فروش',-sum(l=>l.a==ac(401)))}${card('ارزش موجودی',sum(l=>l.a==ac(104)))}</div><div class="c"><b>شروع کار</b><p class="k">ابتدا از منو، اشخاص و کالا را تعریف کنید، سپس فاکتور ثبت کنید. همه اطلاعات فقط روی همین گوشی ذخیره می‌شود.</p></div>`,
+persons:()=>`<div class="c"><input id="a" placeholder="نام شخص"><input id="b" placeholder="تلفن" type="tel"><button class="b" onclick="addP()">افزودن شخص</button></div><div class="c">${db.persons.map(p=>{const b=pbal(p.id);return`<div class="row"><span><a href="#" onclick="S.pid=${p.id};go('pl');return false">${p.name}</a><br><span class="k">${p.tel||''}</span><br><a href="#" onclick="editP(${p.id});return false">ویرایش</a> <a href="#" onclick="delP(${p.id});return false">حذف</a></span><span class="${b>0?'n':'d'}">${fa(Math.abs(b))} ${b>0?'بدهکار':b<0?'بستانکار':''}</span></div>`}).join('')||'<p class="k">هنوز شخصی ثبت نشده است.</p>'}</div>`,
+products:()=>`<div class="c"><input id="a" placeholder="نام کالا"><input id="b" type="number" placeholder="قیمت خرید"><input id="c" type="number" placeholder="قیمت فروش"><input id="d" type="number" placeholder="موجودی اولیه"><button class="b" onclick="addK()">افزودن کالا</button></div><div class="c">${db.products.map(p=>`<div class="row"><span>${p.name}<br><span class="k">خرید ${fa(p.buy)} - فروش ${fa(p.sell)}</span><br><a href="#" onclick="editK(${p.id});return false">ویرایش</a> <a href="#" onclick="delK(${p.id});return false">حذف</a></span><span>${fa(p.qty)} عدد</span></div>`).join('')||'<p class="k">هنوز کالایی ثبت نشده است.</p>'}</div>`,
+sale:()=>inv('s'),buy:()=>inv('b'),
+rec:()=>`<div class="c"><select id="t"><option value="r">دریافت از شخص</option><option value="p">پرداخت به شخص</option></select><select id="p">${opt(db.persons,x=>x.name)}</select><select id="w"><option value="101">صندوق</option><option value="102">بانک</option></select><input id="a" type="number" placeholder="مبلغ"><input id="e" placeholder="توضیحات"><button class="b" onclick="addR()">ثبت سند</button></div>`,
+chq:()=>`<div class="c"><select id="t"><option value="r">چک دریافتی</option><option value="p">چک پرداختی</option></select><select id="p">${opt(db.persons,x=>x.name)}</select><input id="no" placeholder="شماره چک"><input id="bk" placeholder="بانک"><input id="a" type="number" placeholder="مبلغ"><input id="due" type="date" value="${today()}"><button class="b" onclick="addC()">ثبت چک</button></div>${db.chq.slice().reverse().map(c=>`<div class="c"><div class="row"><span>${c.t=='r'?'دریافتی':'پرداختی'} ${c.no||''} - ${nm(db.persons,c.p)}</span><b>${fa(c.a)}</b></div><div class="k">${c.bk||''} - سررسید ${fd(c.due)} - ${{w:'در انتظار',c:'وصول‌شده',x:'برگشتی'}[c.s]}</div>${c.s=='w'?`<button class="b s" onclick="stC(${c.id},'c')">${c.t=='r'?'وصول شد':'پاس شد'}</button> ${c.t=='r'?`<button class="b s" onclick="stC(${c.id},'x')">برگشت خورد</button> `:''}`:''}<a href="#" onclick="delC(${c.id});return false">حذف</a></div>`).join('')||'<p class="k">چکی ثبت نشده است.</p>'}`,
+pl:()=>{const p=db.persons.find(x=>x.id==S.pid);let r=0;return`<div class="c"><b>${p.name}</b></div><div class="c"><table><tr><th>تاریخ</th><th>شرح</th><th>بد</th><th>بس</th><th>مانده</th></tr>${db.docs.flatMap(d=>d.lines.filter(l=>l.p==p.id).map(l=>(r+=l.d-l.c,`<tr><td>${fd(d.date)}</td><td>${d.desc||''}</td><td>${fa(l.d)}</td><td>${fa(l.c)}</td><td>${fa(r)}</td></tr>`))).join('')}</table></div>`},
+journal:()=>`<div class="c"><select id="x">${opt(db.accounts,a=>a.code+' '+a.name)}</select><select id="y">${opt(db.accounts,a=>a.code+' '+a.name)}</select><input id="a" type="number" placeholder="مبلغ"><input id="e" placeholder="شرح سند"><button class="b" onclick="addJ()">ثبت (بدهکار حساب اول، بستانکار حساب دوم)</button></div>${db.docs.slice().reverse().map(d=>`<div class="c"><b>سند ${fa(d.id)}</b> <span class="k">${fd(d.date)} - ${d.desc||''}</span> <a href="#" onclick="delD(${d.id});return false">حذف</a>${d.lines.map(l=>`<div class="row"><span>${nm(db.accounts,l.a)}</span><span>${l.d?fa(l.d)+' بد':fa(l.c)+' بس'}</span></div>`).join('')}</div>`).join('')}`,
+accounts:()=>`<div class="c"><input id="a" type="number" placeholder="کد حساب"><input id="b" placeholder="نام حساب"><select id="c"><option>دارایی</option><option>بدهی</option><option>سرمایه</option><option>درآمد</option><option>هزینه</option></select><button class="b" onclick="addA()">افزودن حساب</button></div><div class="c">${db.accounts.map(a=>`<div class="row"><span>${a.code} - ${a.name}</span><span class="k">${a.type}</span></div>`).join('')}</div>`,
+report:()=>{let D=0,C=0;const rows=db.accounts.map(a=>{const d=sum(l=>l.a==a.id&&l.d>0&&0)+lines().filter(l=>l.a==a.id).reduce((s,l)=>s+l.d,0),c=lines().filter(l=>l.a==a.id).reduce((s,l)=>s+l.c,0);D+=d;C+=c;return`<tr><td>${a.name}</td><td>${fa(d)}</td><td>${fa(c)}</td><td>${fa(d-c)}</td></tr>`}).join('');return`<h3>تراز آزمایشی</h3><div class="c"><table><tr><th>حساب</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr>${rows}<tr><th>جمع</th><th>${fa(D)}</th><th>${fa(C)}</th><th></th></tr></table></div><h3>سود و زیان</h3><div class="c"><div class="row"><span>فروش</span><span>${fa(-sum(l=>l.a==ac(401)))}</span></div><div class="row"><span>بهای تمام‌شده</span><span>${fa(sum(l=>l.a==ac(501)))}</span></div><div class="row"><b>سود ناخالص</b><b>${fa(-sum(l=>l.a==ac(401))-sum(l=>l.a==ac(501)))}</b></div></div>`},
+backup:()=>`<div class="c"><p>اطلاعات شما فقط روی همین دستگاه است. از آن‌ها نسخه پشتیبان بگیرید.</p><button class="b" onclick="exp()">دانلود پشتیبان</button><br><br><input type="file" id="f" accept=".json" onchange="imp(this)"><p class="k">برای بازیابی، فایل پشتیبان را انتخاب کنید.</p></div>`};
+function inv(t){const s=t=='s',tot=S.L.reduce((x,l)=>x+l.q*l.pr,0);return`<div class="c"><select id="p">${opt(db.persons,x=>x.name)}</select><select id="k" onchange="fill()">${opt(db.products,x=>x.name)}</select><input id="q" type="number" placeholder="تعداد"><input id="pr" type="number" placeholder="قیمت واحد"><button class="b s" onclick="addL()">افزودن ردیف</button></div><div class="c">${S.L.map((l,i)=>`<div class="row"><span>${nm(db.products,l.k)} × ${fa(l.q)}</span><span>${fa(l.q*l.pr)} <a href="#" onclick="S.L.splice(${i},1);render();return false">حذف</a></span></div>`).join('')||'<p class="k">ردیفی اضافه نشده است.</p>'}<div class="row"><b>جمع</b><b>${fa(tot)}</b></div><input id="paid" type="number" placeholder="مبلغ ${s?'دریافتی':'پرداختی'} نقدی"><button class="b" onclick="saveI('${t}')">ثبت فاکتور</button></div>`}
+function fill(){const p=db.products.find(x=>x.id==$('#k').value);if(p)$('#pr').value=S.v=='sale'?p.sell:p.buy}
+function addL(){const k=+$('#k').value,q=+$('#q').value,pr=+$('#pr').value;if(!k||!q||!pr)return alert('کالا، تعداد و قیمت را وارد کنید');S.L.push({k,q,pr});render()}
+function post(desc,ls,date,ref,inv){db.docs.push({id:nid(),date:date||today(),desc,lines:ls,ref,inv});save()}
+function saveI(t){const p=+$('#p').value,paid=+$('#paid').value||0,L=S.L;if(!p)return alert('شخص را انتخاب کنید');if(!L.length)return alert('حداقل یک ردیف اضافه کنید');
+ const tot=L.reduce((x,l)=>x+l.q*l.pr,0),X=[];
+ if(t=='s'){let cost=0;L.forEach(l=>{const k=db.products.find(x=>x.id==l.k);cost+=l.q*k.buy;k.qty-=l.q});
+  X.push({a:ac(103),d:tot,c:0,p},{a:ac(401),d:0,c:tot},{a:ac(501),d:cost,c:0},{a:ac(104),d:0,c:cost});
+  if(paid)X.push({a:ac(101),d:paid,c:0},{a:ac(103),d:0,c:paid,p})}
+ else{L.forEach(l=>{const k=db.products.find(x=>x.id==l.k);k.qty+=l.q;k.buy=l.pr});
+  X.push({a:ac(104),d:tot,c:0},{a:ac(201),d:0,c:tot,p});
+  if(paid)X.push({a:ac(201),d:paid,c:0,p},{a:ac(101),d:0,c:paid})}
+ post(t=='s'?'فاکتور فروش':'فاکتور خرید',X,0,0,{t,L});alert('فاکتور ثبت شد');go('home')}
+function addP(){const n=$('#a').value.trim();if(!n)return alert('نام را وارد کنید');db.persons.push({id:nid(),name:n,tel:$('#b').value});save();render()}
+function addK(){const n=$('#a').value.trim();if(!n)return alert('نام کالا را وارد کنید');const buy=+$('#b').value||0,qty=+$('#d').value||0;db.products.push({id:nid(),name:n,buy,sell:+$('#c').value||0,qty});
+ if(qty*buy)post('موجودی اول دوره '+n,[{a:ac(104),d:qty*buy,c:0},{a:ac(301),d:0,c:qty*buy}]);save();render()}
+function addR(){const a=+$('#a').value,p=+$('#p').value,w=ac($('#w').value),e=$('#e').value;if(!a||!p)return alert('شخص و مبلغ را وارد کنید');
+ post(e||($('#t').value=='r'?'دریافت':'پرداخت'),$('#t').value=='r'?[{a:w,d:a,c:0},{a:ac(103),d:0,c:a,p}]:[{a:ac(201),d:a,c:0,p},{a:w,d:0,c:a}]);alert('سند ثبت شد');go('home')}
+function addJ(){const a=+$('#a').value;if(!a)return alert('مبلغ را وارد کنید');post($('#e').value,[{a:+$('#x').value,d:a,c:0},{a:+$('#y').value,d:0,c:a}]);render()}
+function addA(){const c=+$('#a').value,n=$('#b').value.trim();if(!c||!n)return alert('کد و نام را وارد کنید');if(db.accounts.some(x=>x.code==c))return alert('این کد قبلاً ثبت شده است');db.accounts.push({id:nid(),code:c,name:n,type:$('#c').value});save();render()}
+function addC(){const a=+$('#a').value,p=+$('#p').value,t=$('#t').value;if(!a||!p)return alert('شخص و مبلغ را وارد کنید');const c={id:nid(),t,no:$('#no').value,bk:$('#bk').value,a,p,due:$('#due').value,s:'w'};db.chq.push(c);
+ post((t=='r'?'دریافت چک ':'صدور چک ')+c.no,t=='r'?[{a:ac(105),d:a,c:0},{a:ac(103),d:0,c:a,p}]:[{a:ac(201),d:a,c:0,p},{a:ac(202),d:0,c:a}],0,c.id);render()}
+function stC(i,s){const c=db.chq.find(x=>x.id==i),a=c.a;c.s=s;
+ post((s=='c'?'وصول چک ':'برگشت چک ')+c.no,c.t=='r'?(s=='c'?[{a:ac(102),d:a,c:0},{a:ac(105),d:0,c:a}]:[{a:ac(103),d:a,c:0,p:c.p},{a:ac(105),d:0,c:a}]):[{a:ac(202),d:a,c:0},{a:ac(102),d:0,c:a}],0,i);render()}
+function delC(i){if(!confirm('چک و اسناد مربوط به آن حذف شود؟'))return;db.chq=db.chq.filter(x=>x.id!=i);db.docs=db.docs.filter(d=>d.ref!=i);save();render()}
+function delD(i){const d=db.docs.find(x=>x.id==i);if(d.ref)return alert('این سند مربوط به یک چک است. خود چک را حذف کنید.');if(!confirm('سند حذف شود؟'))return;
+ if(d.inv)d.inv.L.forEach(l=>{const k=db.products.find(x=>x.id==l.k);if(k)k.qty+=d.inv.t=='s'?l.q:-l.q});db.docs=db.docs.filter(x=>x.id!=i);save();render()}
+function editP(i){const p=db.persons.find(x=>x.id==i),n=prompt('نام',p.name);if(!n)return;p.name=n;p.tel=prompt('تلفن',p.tel||'')||'';save();render()}
+function delP(i){if(lines().some(l=>l.p==i)||db.chq.some(c=>c.p==i))return alert('این شخص گردش حساب دارد و قابل حذف نیست.');if(!confirm('شخص حذف شود؟'))return;db.persons=db.persons.filter(x=>x.id!=i);save();render()}
+function editK(i){const p=db.products.find(x=>x.id==i),n=prompt('نام کالا',p.name);if(!n)return;p.name=n;p.buy=+prompt('قیمت خرید',p.buy)||0;p.sell=+prompt('قیمت فروش',p.sell)||0;save();render()}
+function delK(i){if(!confirm('کالا حذف شود؟'))return;db.products=db.products.filter(x=>x.id!=i);save();render()}
+function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:'application/json'}));a.download='hesab-backup-'+today()+'.json';a.click()}
+function imp(i){const f=i.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.accounts)throw 0;db=d;save();alert('بازیابی شد');go('home')}catch(e){alert('فایل معتبر نیست')}})}
+render();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
